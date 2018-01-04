@@ -232,9 +232,16 @@ func TykNewSingleHostReverseProxy(target *url.URL, spec *APISpec) *ReverseProxy 
 		// don't want to do anything to the path - req.URL is
 		// already final.
 		if targetToUse == target {
+			fmt.Println("Before single joining slash")
+			newPath := singleJoiningSlash(targetToUse.Path, req.URL.Path)
+			newURL, err := url.Parse(newPath)
+			if err != nil {
+				log.Error("Failed to parse URL: ", err)
+			}
+			req.URL = newURL
+
 			req.URL.Scheme = targetToUse.Scheme
 			req.URL.Host = targetToUse.Host
-			req.URL.Path = singleJoiningSlash(targetToUse.Path, req.URL.Path)
 		}
 		if !spec.Proxy.PreserveHostHeader {
 			req.Host = targetToUse.Host

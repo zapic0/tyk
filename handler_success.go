@@ -16,6 +16,7 @@ import (
 
 	"github.com/TykTechnologies/tyk/config"
 	"github.com/TykTechnologies/tyk/user"
+	"net/url"
 )
 
 // Enums for keys to be stored in a session context - this is how gorilla expects
@@ -215,7 +216,12 @@ func (s *SuccessHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) *http
 	// Make sure we get the correct target URL
 	if s.Spec.Proxy.StripListenPath {
 		log.Debug("Stripping: ", s.Spec.Proxy.ListenPath)
-		r.URL.Path = strings.Replace(r.URL.Path, s.Spec.Proxy.ListenPath, "", 1)
+		newPath := strings.Replace(r.URL.Path, s.Spec.Proxy.ListenPath, "", 1)
+		newURL, err := url.Parse(newPath)
+		if err != nil {
+			log.Error("Failed to parse URL: ", err)
+		}
+		r.URL = newURL
 		log.Debug("Upstream Path is: ", r.URL.Path)
 	}
 
