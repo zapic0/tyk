@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/lonelycode/redigocluster/rediscluster"
 
@@ -607,24 +608,31 @@ func (r RedisCluster) SetRollingWindow(keyName string, per int64, value_override
 
 func (r RedisCluster) AddToSortedSet(keyName, value string, score float64) {
 	fixedKey := r.fixKey(keyName)
-	log.Debug("Pushing raw key to sorted set: ", keyName)
-	log.Debug("Pushing fixed key to sorted set: ", fixedKey)
-	r.ensureConnection()
-	_, err := r.singleton().Do("ZADD", fixedKey, score, value)
+	logEntry := logrus.Fields{
+		"keyName":  keyName,
+		"fixedKey": fixedKey,
+	}
+	log.WithFields(logEntry).Debug("Pushing raw key to sorted set")
 
-	if err != nil {
-		log.Error("Error trying to append keys: ", err)
+	r.ensureConnection()
+	if _, err := r.singleton().Do("ZADD", fixedKey, score, value); err != nil {
+		log.WithFields(logEntry).WithError(err).Error("ZADD command failed")
 	}
 }
 
 func (r RedisCluster) GetSortedSetRange(keyName, scoreFrom, scoreTo string) ([]string, []float64, error) {
 	fixedKey := r.fixKey(keyName)
-	log.Debug("Getting sorted set range: ", keyName, scoreFrom, scoreTo)
-	log.Debug("Getting sorted set range (fixed key): ", fixedKey, scoreFrom, scoreTo)
+	logEntry := logrus.Fields{
+		"keyName":   keyName,
+		"fixedKey":  fixedKey,
+		"scoreFrom": scoreFrom,
+		"scoreTo":   scoreTo,
+	}
+	log.WithFields(logEntry).Debug("Getting sorted set range")
 
 	values, err := redis.Strings(r.singleton().Do("ZRANGEBYSCORE", fixedKey, scoreFrom, scoreTo, "WITHSCORES"))
 	if err != nil {
-		log.Error("ZRANGEBYSCORE command failed: ", err)
+		log.WithFields(logEntry).WithError(err).Error("ZRANGEBYSCORE command failed")
 		return nil, nil, err
 	}
 
@@ -645,12 +653,16 @@ func (r RedisCluster) GetSortedSetRange(keyName, scoreFrom, scoreTo string) ([]s
 
 func (r RedisCluster) RemoveSortedSetRange(keyName, scoreFrom, scoreTo string) error {
 	fixedKey := r.fixKey(keyName)
-	log.Debug("Removing sorted set range: ", keyName, scoreFrom, scoreTo)
-	log.Debug("Removing sorted set range (fixed key): ", fixedKey, scoreFrom, scoreTo)
+	logEntry := logrus.Fields{
+		"keyName":   keyName,
+		"fixedKey":  fixedKey,
+		"scoreFrom": scoreFrom,
+		"scoreTo":   scoreTo,
+	}
+	log.WithFields(logEntry).Debug("Removing sorted set range")
 
-	_, err := r.singleton().Do("ZREMRANGEBYSCORE", fixedKey, scoreFrom, scoreTo)
-	if err != nil {
-		log.Error("ZREMRANGEBYSCORE command failed: ", err)
+	if _, err := r.singleton().Do("ZREMRANGEBYSCORE", fixedKey, scoreFrom, scoreTo); err != nil {
+		log.WithFields(logEntry).WithError(err).Error("ZREMRANGEBYSCORE command failed")
 		return err
 	}
 
