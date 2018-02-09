@@ -934,6 +934,20 @@ func (r *RPCStorageHandler) DeleteScanMatch(pattern string) bool {
 	return false
 }
 
+func (r *RPCStorageHandler) AddToSortedSet(keyName, value string, score float64) {
+	log.Error("Not implemented")
+}
+
+func (r *RPCStorageHandler) GetSortedSetRange(keyName, scoreFrom, scoreTo string) ([]string, []float64, error) {
+	log.Error("Not implemented")
+	return nil, nil, nil
+}
+
+func (r *RPCStorageHandler) RemoveSortedSetRange(keyName, scoreFrom, scoreTo string) error {
+	log.Error("Not implemented")
+	return nil
+}
+
 func getDispatcher() *gorpc.Dispatcher {
 	dispatch := gorpc.NewDispatcher()
 

@@ -39,6 +39,9 @@ type Handler interface {
 	GetAndDeleteSet(string) []interface{}
 	RemoveFromSet(string, string)
 	DeleteScanMatch(string) bool
+	AddToSortedSet(string, string, float64)
+	GetSortedSetRange(string, string, string) ([]string, []float64, error)
+	RemoveSortedSetRange(string, string, string) error
 }
 
 func HashStr(in string) string {
